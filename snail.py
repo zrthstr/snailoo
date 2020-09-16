@@ -14,9 +14,17 @@ RED = (255,  0,  0)
 
 
 class Snail:
+    screen = 0
+
     def __init__(self, x=0, y=0):
         self.x = x * GRID_SLEN
         self.y = y * GRID_SLEN
+
+    def draw(self):
+        snake_size = 10
+        not_full = 0
+        pygame.draw.circle(self.screen, RED, (self.x, self.y), snake_size, not_full)
+
 
     def go(self, direction):
         if direction == K_UP:
@@ -77,14 +85,16 @@ class Game:
         self.snakes = Snakes()
         self.max_x, self.max_y, self.snail = self.read_level_file(self.level_file)
         self.screen = pygame.display.set_mode( (GRID_SLEN * self.max_x, GRID_SLEN * self.max_y) )
+        self.snail.screen = self.screen
 
         #self.grid = Grid(x,y)
 
     def draw(self):
         not_full = 0
         snake_size = GRID_SLEN - 2
+        self.snail.draw()
 
-        pygame.draw.circle(self.screen, RED, (self.snail.x, self.snail.y), snake_size, not_full)
+        #pygame.draw.circle(self.screen, RED, (self.snail.x, self.snail.y), snake_size, not_full)
 
     def play(self):
         while True:
