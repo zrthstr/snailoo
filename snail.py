@@ -48,23 +48,45 @@ class Snail:
 
 
 class Snake():
+    screen = 0
     def __init__(self,x,y):
         self.head = (x,y)
         self.tail = []
 
 class Snakes:
+    screen = 0
     def __init__(self):
         self.slist = []
 
 class Brick:
+    screen = 0
     def __init__(self,x,y,movable):
-        self.x = x
-        self.y = y
+        self.x = x * GRID_SLEN
+        self.y = y * GRID_SLEN
         self.movable = movable
 
+    def draw(self):
+        snake_size = 10
+        not_full = 0
+        BLUE  = (0, 0,255)
+        pygame.draw.circle(self.screen, BLUE , (self.x, self.y), snake_size, not_full)
+
+
 class Bricks:
+    screen = 0
     def __init__(self):
         self.blist = []
+
+    #def add_screen(self)
+    #    for b in self.blist:
+    #        b.sceen = self.screen
+
+    def draw(self):
+        for b in self.blist:
+            if b.screen == 0:
+                b.screen = self.screen
+            b.draw()
+
 
 #class Grid:
 #    def __init__(self, max_x, max_y):
@@ -86,6 +108,7 @@ class Game:
         self.max_x, self.max_y, self.snail = self.read_level_file(self.level_file)
         self.screen = pygame.display.set_mode( (GRID_SLEN * self.max_x, GRID_SLEN * self.max_y) )
         self.snail.screen = self.screen
+        self.bricks.screen = self.screen
 
         #self.grid = Grid(x,y)
 
@@ -93,6 +116,7 @@ class Game:
         not_full = 0
         snake_size = GRID_SLEN - 2
         self.snail.draw()
+        self.bricks.draw()
 
         #pygame.draw.circle(self.screen, RED, (self.snail.x, self.snail.y), snake_size, not_full)
 
