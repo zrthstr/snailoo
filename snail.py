@@ -20,6 +20,7 @@ class Snail:
         self.x = x * GRID_SLEN
         self.y = y * GRID_SLEN
 
+
     def draw(self):
         snake_size = 10
         not_full = 0
@@ -27,24 +28,64 @@ class Snail:
 
 
     def go(self, direction):
+        new_x = self.x
+        new_y = self.y
+
         if direction == K_UP:
-            #if self.y > 0:
-            self.y -= 1 * GRID_SLEN
-
+            new_y -= GRID_SLEN
         elif direction == K_DOWN:
-            #if self.y < min_y:
-            self.y += 1 * GRID_SLEN
-
+            new_y += GRID_SLEN
         elif direction == K_LEFT:
-            #if self.x > 0:
-            self.x -= 1 * GRID_SLEN
-
+            new_x -= GRID_SLEN
         elif direction == K_RIGHT:
-            #if self.x < min_x:
-            self.x += 1 * GRID_SLEN
+            new_x += GRID_SLEN
         else:
             print(f"error, snake got bad moevemtn: {direction}")
             sys.exit()
+
+        if self.is_snake(new_x, new_y):
+            self.x = new_x
+            self.y = new_y
+            self.die()
+
+        elif game.bricks.is_solid(new_x, new_y):
+            #bell()
+            return
+
+        elif game.bricks.is_mobile(new_x, new_y):
+            if self.can_move(self, new_new_x, new_new_y): # check if according field is free
+                #self.x = new_x
+                #self.y = new_y
+                pass
+            else:
+                # bell()
+                return
+
+        elif self.is_outside(new_x, new_y):
+            return
+
+        self.x = new_x
+        self.y = new_y
+
+
+    def is_snake(self ,new_x, new_y):
+        return False
+    #def is_block(self ,new_x, new_y):
+    #    if bricks.is_sold(new_x, new_y, 'mobile'):
+    #        return True
+    #def is_(self ,new_x, new_y):
+    #    if block.is_on(new_x, new_y, 'mobile'):
+    #        return True
+    #    return False
+
+    def is_outside(self ,new_x, new_y):
+        print("tesing outside")
+        print(f"x{new_x} y{new_y}")
+        if new_x < 0 or new_y < 0 or new_x > game.max_x * GRID_SLEN or new_y > game.max_y * GRID_SLEN:
+            print("is OOut")
+            return True
+        print("is IIIIn")
+        return False
 
 
 class Snake():
@@ -60,16 +101,18 @@ class Snakes:
 
 class Brick:
     screen = 0
+
     def __init__(self,x,y,movable):
         self.x = x * GRID_SLEN
         self.y = y * GRID_SLEN
         self.movable = movable
+        self.color = [(0, 0,255), (0, 0,105)]
 
     def draw(self):
         snake_size = 10
         not_full = 0
-        BLUE  = (0, 0,255)
-        pygame.draw.circle(self.screen, BLUE , (self.x, self.y), snake_size, not_full)
+        print(self.color[self.movable])
+        pygame.draw.circle(self.screen, self.color[self.movable] , (self.x, self.y), snake_size, not_full)
 
 
 class Bricks:
@@ -87,6 +130,22 @@ class Bricks:
                 b.screen = self.screen
             b.draw()
 
+    def is_mobile(self, x, y):
+        for brick in self.blist:
+            if brick.x == x and brick.y == y and brick.movable == True:
+                return True
+        return False
+
+    def is_solid(self, x, y):
+        for brick in self.blist:
+            if brick.x == x and brick.y == y and brick.movable == False:
+                return True
+
+    def is_any(self, x, y):
+        return not (is_mobile(x,y) or is_mobile(x,y))
+        
+
+
 
 #class Grid:
 #    def __init__(self, max_x, max_y):
@@ -96,6 +155,7 @@ class Bricks:
 
 class Game:
     def __init__(self, level_file="level1.lvl", BG_COLOR=GRAY):
+        global bricks
         self.BG_COLOR = BG_COLOR
         pygame.init()
         pygame.display.set_caption("dddddd")
@@ -109,6 +169,7 @@ class Game:
         self.screen = pygame.display.set_mode( (GRID_SLEN * self.max_x, GRID_SLEN * self.max_y) )
         self.snail.screen = self.screen
         self.bricks.screen = self.screen
+        print(self.screen)
 
         #self.grid = Grid(x,y)
 
@@ -184,6 +245,7 @@ class Game:
 
 
 def main():
+    global game
     game = Game()
     #game.setup()
     game.play()
