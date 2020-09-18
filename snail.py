@@ -53,9 +53,15 @@ class Snail:
             return
 
         elif game.bricks.is_mobile(new_x, new_y):
-            if self.can_move(self, new_new_x, new_new_y): # check if according field is free
-                #self.x = new_x
-                #self.y = new_y
+            new_new_x = self.x + self.x - new_x
+            new_new_y = self.y + self.y - new_y
+            if game.bricks.is_any(new_new_x, new_new_y) and not self.is_outside(new_new_x, new_new_y): # check if according field is free
+                # okey!
+                # move brick and snail
+                print(f"XXXXXXXXXXX moving block {self.x,self.y} {new_x} {new_y}    {new_new_x} {new_new_y}")
+                game.bricks.rm(new_x, new_y)
+                game.bricks.blist.append(Brick(new_new_x, new_new_y, True))
+                game.bricks.blist.append(Brick(self.x + 30, self.y + 30, True))
                 pass
             else:
                 # bell()
@@ -79,12 +85,8 @@ class Snail:
     #    return False
 
     def is_outside(self ,new_x, new_y):
-        print("tesing outside")
-        print(f"x{new_x} y{new_y}")
         if new_x < 0 or new_y < 0 or new_x > game.max_x * GRID_SLEN or new_y > game.max_y * GRID_SLEN:
-            print("is OOut")
             return True
-        print("is IIIIn")
         return False
 
 
@@ -108,11 +110,14 @@ class Brick:
         self.movable = movable
         self.color = [(0, 0,255), (0, 0,105)]
 
+
     def draw(self):
         snake_size = 10
         not_full = 0
-        print(self.color[self.movable])
         pygame.draw.circle(self.screen, self.color[self.movable] , (self.x, self.y), snake_size, not_full)
+
+    def can_move(self, x, y): # ture if is not block, also handle snake and boarder?
+        return is_
 
 
 class Bricks:
@@ -120,9 +125,19 @@ class Bricks:
     def __init__(self):
         self.blist = []
 
+    def debug(self):
+        print()
+        for i, brick in enumerate(self.blist):
+            print(i, brick.x, brick.y, brick.movable)
+
     #def add_screen(self)
     #    for b in self.blist:
     #        b.sceen = self.screen
+    #
+    def rm(self, x, y):
+        for i, brick in enumerate(self.blist):
+            if brick.x == x and brick.y == y:
+                self.blist.pop(i)
 
     def draw(self):
         for b in self.blist:
@@ -142,7 +157,7 @@ class Bricks:
                 return True
 
     def is_any(self, x, y):
-        return not (is_mobile(x,y) or is_mobile(x,y))
+        return not (self.is_mobile(x,y) or self.is_mobile(x,y))
         
 
 
@@ -178,6 +193,8 @@ class Game:
         snake_size = GRID_SLEN - 2
         self.snail.draw()
         self.bricks.draw()
+        #print(len(self.bricks.blist))
+        #print(self.bricks.blist)
 
         #pygame.draw.circle(self.screen, RED, (self.snail.x, self.snail.y), snake_size, not_full)
 
@@ -195,6 +212,7 @@ class Game:
             self.draw()
             pygame.display.update()
             #pygame.event.clear()
+            self.bricks.debug()
         
     def handle_input(self):
             key_press = pygame.event.get(KEYDOWN)
