@@ -2,6 +2,7 @@
 
 import sys
 import pygame
+import random
 from pygame.locals import *
 
 GRID_SLEN = 30
@@ -51,7 +52,7 @@ class Snail:
             print(f"error, snake got bad moevemtn: {direction}")
             sys.exit()
 
-        if self.is_snake(new_x, new_y):
+        if game.snakes.is_snake(new_x, new_y):
             self.x = new_x
             self.y = new_y
             self.die()
@@ -62,12 +63,11 @@ class Snail:
 
         elif game.bricks.is_mobile(new_x, new_y):
             if game.bricks.is_any(bnew_x, bnew_y) and not self.is_outside(bnew_x, bnew_y): # check if according field is free
-                # okey!
-                # move brick and snail
-                print(f"XXXXXXXXXXX moving block {self.x,self.y} {new_x} {new_y}    {bnew_x} {bnew_y}")
                 game.bricks.rm(new_x, new_y)
-                #game.bricks.blist.append(Brick(new_new_x, new_new_y, True))
                 game.bricks.blist.append(Brick(bnew_x // GRID_SLEN, bnew_y // GRID_SLEN, True))
+
+                if game.snakes.is_snake(bnew_x, bnew_y):
+                    game.snakes.kill(bnew_x, bnew_y)
                 pass
             else:
                 # bell()
@@ -78,17 +78,10 @@ class Snail:
 
         self.x = new_x
         self.y = new_y
-        game.bricks.debug()
+        #game.bricks.debug()
 
 
-    def is_snake(self ,new_x, new_y):
-        return False
-    #def is_block(self ,new_x, new_y):
-    #    if bricks.is_sold(new_x, new_y, 'mobile'):
-    #        return True
-    #def is_(self ,new_x, new_y):
-    #    if block.is_on(new_x, new_y, 'mobile'):
-    #        return True
+    #def is_snake(self ,new_x, new_y):
     #    return False
 
     def is_outside(self ,new_x, new_y):
@@ -98,18 +91,104 @@ class Snail:
 
 
 class Snake():
-    screen = 0
     def __init__(self,x,y):
-        self.head = (x,y)
-        self.tail = []
+        self.body = [(x,y)]
+        self.directions = [(1,0), (-1,0), (0,1), (0,-1)]
+        #self.direction = ['UP', 'DOWN', 'RIGHT', 'LEFT']
+        random.shuffle(self.directions)
+        self.len = random.randint(1,9)
+
+    def is_on(self, x, y):
+        for part in self.body:
+            if part == (x,y):
+                return True
+        return False
+
+
+    def move(self):
+        #turn = ['RIGHT', 'LEFT']
+        if not random.randint(0,3):
+            print("randomizing")
+            random.shuffle(self.directions)
+
+        #for d in self.directions:
+        for i in range(4):
+            self.directions = self.directions[1:] + self.directions[0:1]
+            d = self.directions[0]
+
+            new_head = (self.body[0][0] + d[0], self.body[0][1] + d[1])
+            if self.is_outside():
+                continue
+            elif self.is_snail():
+                snail.die()
+            elif self.is_brick():
+                continue
+            elif self.is_snake():
+                continue
+            else:
+                #self.body.pop()
+                self.body.insert(0,new_head)
+                break
+        else:
+            # no where to go, turn
+            self.body = self.body[::-1]
+
+
+        if len(self.body) > self.len:
+            self.body.pop()
+            #self.body = self.body[0:self.len]
+
+        print(self.body)
+
+    def is_outside(self):
+        return False
+
+    def is_snail(self):
+        return False
+
+    def is_brick(self):
+        return False
+
+    def is_snake(self):
+        return False
+
+    def draw(self):
+        snake_size = 15
+        not_full = 0
+        color = (10,200,20)
+        for i, _ in enumerate(self.body):
+            pygame.draw.circle(game.screen, color , (self.body[i][0] * GRID_SLEN, self.body[i][1] * GRID_SLEN), snake_size, not_full)
+            color = (40,230,50)
+        #pygame.draw.circle(game.screen, (10,200,20) , (100, 100), snake_size, not_full)
+
 
 class Snakes:
     screen = 0
     def __init__(self):
         self.slist = []
 
+    def draw(self):
+        for snake in self.slist:
+            snake.draw()
+
+    def is_snake(self, x, y):
+        for i, snake in enumerate(self.slist):
+            if snake.is_on(x,y):
+                return True
+        return False
+
+    def kill(self,x ,y):
+        for i, snake in enumerate(self.slist):
+            if snake.is_on(x,y):
+                self.snake.slist.pop(i)
+
+    def move(self):
+        for snake in self.slist:
+            snake.move()
+
+
 class Brick:
-    screen = 0
+    #screen = 0
 
     def __init__(self,x,y,movable):
         self.x = x * GRID_SLEN
@@ -121,19 +200,19 @@ class Brick:
     def draw(self):
         snake_size = 10
         not_full = 0
-        pygame.draw.circle(self.screen, self.color[self.movable] , (self.x, self.y), snake_size, not_full)
+        #print(f"{(self.x, self.y)}")
+        pygame.draw.circle(game.screen, self.color[self.movable] , (self.x, self.y), snake_size, not_full)
 
-    def can_move(self, x, y): # ture if is not block, also handle snake and boarder?
-        return is_
+    #def can_move(self, x, y): # ture if is not block, also handle snake and boarder?
+    #    return is_
 
 
 class Bricks:
-    screen = 0
+    #screen = 0
     def __init__(self):
         self.blist = []
 
     def debug(self):
-        print()
         for i, brick in enumerate(self.blist):
             print(i, brick.x, brick.y, brick.movable)
 
@@ -148,8 +227,8 @@ class Bricks:
 
     def draw(self):
         for b in self.blist:
-            if b.screen == 0:
-                b.screen = self.screen
+            #if b.screen == 0:
+            #    b.screen = self.screen
             b.draw()
 
     def is_mobile(self, x, y):
@@ -164,15 +243,8 @@ class Bricks:
                 return True
 
     def is_any(self, x, y):
-        return not (self.is_mobile(x,y) or self.is_mobile(x,y))
-        
+        return not (self.is_mobile(x,y) or self.is_solid(x,y))
 
-
-
-#class Grid:
-#    def __init__(self, max_x, max_y):
-#        self.max_x = max_x
-#        self.max_y = max_y
 
 
 class Game:
@@ -186,12 +258,12 @@ class Game:
         self.level_file = level_file
         self.bricks = Bricks()
         #self.snail = Snail()
-        self.snakes = Snakes()
+        self.snakes = Snakes() # TODO
         self.max_x, self.max_y, self.snail = self.read_level_file(self.level_file)
         self.screen = pygame.display.set_mode( (GRID_SLEN * self.max_x, GRID_SLEN * self.max_y) )
         self.snail.screen = self.screen
         self.bricks.screen = self.screen
-        print(self.screen)
+        #print(self.screen)
 
         #self.grid = Grid(x,y)
 
@@ -200,6 +272,7 @@ class Game:
         snake_size = GRID_SLEN - 2
         self.snail.draw()
         self.bricks.draw()
+        self.snakes.draw()
         #print(len(self.bricks.blist))
         #print(self.bricks.blist)
 
@@ -231,6 +304,7 @@ class Game:
                 #    sys.exit()
                 if key_press[0].key in [K_UP, K_DOWN, K_RIGHT, K_LEFT]:
                     self.snail.go(key_press.pop(0).key)
+                    game.snakes.move()
                 else:
                     print("unknown key")
                     print(key_press[0].key)
@@ -249,7 +323,7 @@ class Game:
             #grid = [['V' ] * len_x] * len_y
             #print(grid)
 
-            self.snakes = Snakes()
+            #self.snakes = Snakes()
             for y, line in enumerate(lines):
                 for x, o in enumerate(line):
                     if o == '&':
