@@ -31,14 +31,22 @@ class Snail:
         new_x = self.x
         new_y = self.y
 
+        bnew_x = self.x
+        bnew_y = self.y
+
+
         if direction == K_UP:
             new_y -= GRID_SLEN
+            bnew_y -= GRID_SLEN * 2
         elif direction == K_DOWN:
             new_y += GRID_SLEN
+            bnew_y += GRID_SLEN * 2
         elif direction == K_LEFT:
             new_x -= GRID_SLEN
+            bnew_x -= GRID_SLEN * 2
         elif direction == K_RIGHT:
             new_x += GRID_SLEN
+            bnew_x += GRID_SLEN * 2
         else:
             print(f"error, snake got bad moevemtn: {direction}")
             sys.exit()
@@ -53,15 +61,13 @@ class Snail:
             return
 
         elif game.bricks.is_mobile(new_x, new_y):
-            new_new_x = self.x + self.x - new_x
-            new_new_y = self.y + self.y - new_y
-            if game.bricks.is_any(new_new_x, new_new_y) and not self.is_outside(new_new_x, new_new_y): # check if according field is free
+            if game.bricks.is_any(bnew_x, bnew_y) and not self.is_outside(bnew_x, bnew_y): # check if according field is free
                 # okey!
                 # move brick and snail
-                print(f"XXXXXXXXXXX moving block {self.x,self.y} {new_x} {new_y}    {new_new_x} {new_new_y}")
+                print(f"XXXXXXXXXXX moving block {self.x,self.y} {new_x} {new_y}    {bnew_x} {bnew_y}")
                 game.bricks.rm(new_x, new_y)
-                game.bricks.blist.append(Brick(new_new_x, new_new_y, True))
-                game.bricks.blist.append(Brick(self.x + 30, self.y + 30, True))
+                #game.bricks.blist.append(Brick(new_new_x, new_new_y, True))
+                game.bricks.blist.append(Brick(bnew_x // GRID_SLEN, bnew_y // GRID_SLEN, True))
                 pass
             else:
                 # bell()
@@ -72,6 +78,7 @@ class Snail:
 
         self.x = new_x
         self.y = new_y
+        game.bricks.debug()
 
 
     def is_snake(self ,new_x, new_y):
@@ -212,7 +219,7 @@ class Game:
             self.draw()
             pygame.display.update()
             #pygame.event.clear()
-            self.bricks.debug()
+            #self.bricks.debug()
         
     def handle_input(self):
             key_press = pygame.event.get(KEYDOWN)
