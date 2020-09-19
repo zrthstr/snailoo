@@ -9,6 +9,13 @@ import time
 GRID_SLEN = 30
 GRAY =   (159,182,205) ## blude gray ??
 RED = (255,  0,  0)
+FPS = 3
+
+UP = (1,0)
+DOWN = (-1,0)
+RIGHT = (0,1)
+LEFT = (0,-1)
+
 #GRID_WIDTH = 140
 #GRID_HEIGHT = 100
 #SCREEN_WIDTH = GRID_WIDTH * GRID_SLEN
@@ -64,7 +71,7 @@ class Snail:
                 game.bricks.blist.append(Brick(bnew_x, bnew_y, True))
 
                 if game.snakes.is_snake(bnew_x, bnew_y):
-                    game.snakes.kill(bnew_x, bnew_y)
+                    game.snakes.kill_or_cut(bnew_x, bnew_y)
                 pass
             else:
                 # bell()
@@ -75,10 +82,7 @@ class Snail:
 
         self.x = new_x
         self.y = new_y
-        #game.bricks.debug()
 
-    #def is_snake(self ,new_x, new_y):
-    #    return False
 
     def is_outside(self ,new_x, new_y):
         if new_x < 0 or new_y < 0 or new_x > game.max_x or new_y > game.max_y:
@@ -86,18 +90,22 @@ class Snail:
         return False
 
 
+
 class Snake():
     def __init__(self,x,y):
         self.body = [(x,y)]
-        self.directions = [(1,0), (-1,0), (0,1), (0,-1)]
-        #self.direction = ['UP', 'DOWN', 'RIGHT', 'LEFT']
+        self.directions = [UP, DOWN, RIGHT, LEFT]
         random.shuffle(self.directions)
-        self.len = random.randint(2,9)
+        MIN_SNAKE_LEN = 2
+        MAX_SNAKE_LEN = 8
+        self.len = random.randint(MIN_SNAKE_LEN, MAX_SNAKE_LEN+1)
 
     def is_on(self, x, y):
+        count = 0
         for part in self.body:
+            count +=1
             if part == (x,y):
-                return True
+                return count
         return False
 
 
@@ -106,8 +114,9 @@ class Snake():
             random.shuffle(self.directions)
 
         for i in range(4):
-            self.directions = self.directions[1:] + self.directions[0:1]
-            d = self.directions[0]
+            d = self.directions.pop()
+            self.directions += [d]
+
             new_head = (self.body[0][0] + d[0], self.body[0][1] + d[1])
             if self.is_outside(* new_head):
                 #self.directions = self.directions[1:] + self.directions[0:1]
@@ -135,13 +144,15 @@ class Snake():
 
 
     def is_outside(self, x, y):
-        if x < 0 or y < 0 or x > game.max_x or y > game.max_y:
-            return True
-        return False
+        return x < 0 or y < 0 or x > game.max_x or y > game.max_y:
+        #if x < 0 or y < 0 or x > game.max_x or y > game.max_y:
+        #    return True
+        #return False
 
     def is_snail(self,x ,y):
-        if game.snail.x == x and game.snail.y == y:
-            return True
+        return game.snail.x == x and game.snail.y == y:
+        #if game.snail.x == x and game.snail.y == y:
+        #    return True
 
 
     def draw(self):
@@ -168,10 +179,17 @@ class Snakes:
                 return True
         return False
 
-    def kill(self,x ,y):
+    def kill_or_cut(self,x ,y):
         for i, snake in enumerate(self.slist):
-            if snake.is_on(x,y):
+            count = snake.is_on(x,y)
+            if count == 1:
                 self.slist.pop(i)
+                if len(self.slist) == 0:
+                    game.win()
+            else:
+                snake.len = count
+                snake.body = snake.body[0:count-1]
+
 
     def move(self):
         for snake in self.slist:
@@ -236,10 +254,9 @@ class Bricks:
 
     # only one of these should be needed...
     def is_any(self, x, y):
-        #print(not (self.is_mobile(x,y) or self.is_solid(x,y)))
         return not (self.is_mobile(x,y) or self.is_solid(x,y))
 
-    def is_brick(self, x, y):
+    def is_brickk(self, x, y):
         print(f"testing if {x,y} is part of bricks")
         if self.is_mobile(x,y):
             print("YES")
@@ -269,14 +286,12 @@ class Game:
         self.screen = pygame.display.set_mode( (GRID_SLEN * self.max_x, GRID_SLEN * self.max_y) )
         self.snail.screen = self.screen
         self.bricks.screen = self.screen
-        #print(self.screen)
 
-        #self.grid = Grid(x,y)
 
     def over(self):
         print("You lose .. :( ")
         game.draw()
-        time.sleep(200)
+        time.sleep(20)
         sys.exit()
 
     def win(self):
@@ -294,23 +309,13 @@ class Game:
 
     def play(self):
         while True:
-            #frame += 1
-            #time.sleep(1 / FPS)
-            #move_player(handle_input())
-            #move_snake()
-            #display(frame)
             self.handle_input()
-
             self.screen.fill(self.BG_COLOR)
             #self.screen.blit('222', textRect)
             game.snakes.move()
             self.draw()
 
-
-            FPS = 20
             time.sleep(1/FPS)
-            #pygame.event.clear()
-            #self.bricks.debug()
 
         
     def handle_input(self):
@@ -329,17 +334,12 @@ class Game:
 
     def read_level_file(self, level_file):
         with open(level_file, 'r') as f:
-            #lines = f.readlines()
             lines = f.read().splitlines()
             max_len = max([len(i) for i in lines])
 
             len_x = max_len
             len_y = len(lines)
-            print(f"len_x {len_x}  len_y {len_y}")
 
-            #grid = [['V' ] * len_x] * len_y
-
-            #self.snakes = Snakes()
             for y, line in enumerate(lines):
                 for x, o in enumerate(line):
                     if o == '&':
@@ -358,7 +358,6 @@ class Game:
             return len_x, len_y, snail
 
 
-
 def main():
     global game
 
@@ -368,7 +367,6 @@ def main():
         level = sys.argv[1]
 
     game = Game(level)
-    #game.setup()
     game.play()
 
 
