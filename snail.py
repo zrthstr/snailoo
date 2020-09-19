@@ -63,7 +63,7 @@ class Snail:
             return
 
         elif game.bricks.is_mobile(new_x, new_y):
-            if game.bricks.is_any(bnew_x, bnew_y) and not self.is_outside(bnew_x, bnew_y): # check if according field is free
+            if game.bricks.is_any(bnew_x, bnew_y) and not self.is_outside(bnew_x, bnew_y):
                 game.bricks.rm(new_x, new_y)
                 game.bricks.blist.append(Brick(bnew_x // GRID_SLEN, bnew_y // GRID_SLEN, True))
 
@@ -93,7 +93,7 @@ class Snail:
 
 class Snake():
     def __init__(self,x,y):
-        self.body = [(x,y)]
+        self.body = [(x*GRID_SLEN ,y * GRID_SLEN)]
         self.directions = [(1,0), (-1,0), (0,1), (0,-1)]
         #self.direction = ['UP', 'DOWN', 'RIGHT', 'LEFT']
         random.shuffle(self.directions)
@@ -107,32 +107,38 @@ class Snake():
 
 
     def move(self):
-        print(self.directions)
+        #print(self.directions)
         #turn = ['RIGHT', 'LEFT']
         if not random.randint(0,3):
-            print("randomizing")
+            #print("randomizing")
             random.shuffle(self.directions)
 
         for i in range(4):
             self.directions = self.directions[1:] + self.directions[0:1]
             d = self.directions[0]
-
             new_head = (self.body[0][0] + d[0], self.body[0][1] + d[1])
+            print(f"new head: {new_head}")
             if self.is_outside(* new_head):
                 #self.directions = self.directions[1:] + self.directions[0:1]
+                print("is outside")
                 continue
             elif self.is_snail(* new_head):
                 #self.directions = self.directions[1:] + self.directions[0:1]
+                print("is snail")
                 game.over()
-            elif self.is_brick():
+            elif game.bricks.is_solid(* new_head):
+            #elif not game.bricks.is_any(* new_head):
                 #self.directions = self.directions[1:] + self.directions[0:1]
+                print("snake on brick")
                 continue
             elif game.snakes.is_snake(* new_head):
                 #self.directions = self.directions[1:] + self.directions[0:1]
+                print("is snake")
                 continue
             else:
                 #self.body.pop()
                 self.body.insert(0,new_head)
+                print("else!! okey")
                 break
         else:
             # no where to go, turn
@@ -152,17 +158,9 @@ class Snake():
         return False
 
     def is_snail(self,x ,y):
-        if game.snail.x = x and game.snail.y = y:
+        if game.snail.x == x and game.snail.y == y:
             return False
 
-    def is_brick(self):
-        return False
-
-    #def is_snake(self):
-    #    for part in self.body:
-    #        if game.snakes.is_snake(part[0],part[1]):
-    #            return True
-    #    return False
 
     def draw(self):
         snake_size = 15
@@ -253,9 +251,24 @@ class Bricks:
         for brick in self.blist:
             if brick.x == x and brick.y == y and brick.movable == False:
                 return True
+        return False
 
+    # only one of these should be needed...
     def is_any(self, x, y):
+        #print(not (self.is_mobile(x,y) or self.is_solid(x,y)))
         return not (self.is_mobile(x,y) or self.is_solid(x,y))
+
+    def is_brick(self, x, y):
+        print(f"testing if {x,y} is part of bricks")
+        if self.is_mobile(x,y):
+            print("YES")
+            return True
+        elif self.is_solid(x,y):
+            print("YES")
+            return True
+        else:
+            print("no")
+            return False
 
 
 
@@ -295,8 +308,6 @@ class Game:
         self.snail.draw()
         self.bricks.draw()
         self.snakes.draw()
-        #print(len(self.bricks.blist))
-        #print(self.bricks.blist)
 
         #pygame.draw.circle(self.screen, RED, (self.snail.x, self.snail.y), snake_size, not_full)
 
@@ -318,7 +329,6 @@ class Game:
         
     def handle_input(self):
             key_press = pygame.event.get(KEYDOWN)
-            ##print(key_press)
             if len(key_press) != 0:
                 #sys.exit()
                 #if K_ESCAPE in key_press.key:
@@ -343,7 +353,6 @@ class Game:
             print(f"len_x {len_x}  len_y {len_y}")
 
             #grid = [['V' ] * len_x] * len_y
-            #print(grid)
 
             #self.snakes = Snakes()
             for y, line in enumerate(lines):
@@ -367,7 +376,6 @@ class Game:
 
 def main():
     global game
-    print(len(sys.argv))
 
     if len(sys.argv) == 1:
         level='level1.lvl'
