@@ -32,7 +32,7 @@ class Snail:
     def draw(self):
         snake_size = 10
         not_full = 0
-        pygame.draw.circle(self.screen, RED, (self.x * GRID_SLEN, self.y * GRID_SLEN), snake_size, not_full)
+        pygame.draw.circle(game.screen, RED, (self.x * GRID_SLEN, self.y * GRID_SLEN), snake_size, not_full)
 
     def go(self, direction):
         new_x = self.x
@@ -53,7 +53,7 @@ class Snail:
             new_x += 1
             bnew_x += 2
         else:
-            print(f"error, snake got bad moevemtn: {direction}")
+            print(f"error, snake got bad movement instruction: {direction}")
             sys.exit()
 
         if game.snakes.is_snake(new_x, new_y):
@@ -66,6 +66,7 @@ class Snail:
             return
 
         elif game.bricks.is_mobile(new_x, new_y):
+            ## is_any is broken, why is this working? ## TODO
             if game.bricks.is_any(bnew_x, bnew_y) and not self.is_outside(bnew_x, bnew_y):
                 game.bricks.rm(new_x, new_y)
                 game.bricks.blist.append(Brick(bnew_x, bnew_y, True))
@@ -109,50 +110,70 @@ class Snake():
         return False
 
 
-    def move(self):
-        if not random.randint(0,3):
-            random.shuffle(self.directions)
-
-        for i in range(4):
-            d = self.directions.pop()
-            self.directions += [d]
-
-            new_head = (self.body[0][0] + d[0], self.body[0][1] + d[1])
-            if self.is_outside(* new_head):
-                #self.directions = self.directions[1:] + self.directions[0:1]
-                continue
-            elif self.is_snail(* new_head):
-                #self.directions = self.directions[1:] + self.directions[0:1]
-                self.body.insert(0,new_head)
-                game.over()
-            elif not game.bricks.is_any(* new_head):
-                #self.directions = self.directions[1:] + self.directions[0:1]
-                continue
-            elif game.snakes.is_snake(* new_head):
-                #self.directions = self.directions[1:] + self.directions[0:1]
-                continue
-            else:
-                self.body.insert(0,new_head)
-                break
-        else:
-            # no where to go, turn
-            self.body = self.body[::-1]
-
-
+    def do_move(self):
+        direction = self.directions[0]
+        new_head = (self.body[0][0] + direction[0], self.body[0][1] + direction[1])
         if len(self.body) > self.len:
             self.body.pop()
+        self.body.insert(0,new_head)
+
+    def can_do_any(self):
+        for direction in self.directions:
+            if self.can_continue():
+                self.directions = direction + self.directions.remove(direction)
+                return
+
+    def can_continue(self):
+        direction = self.directions[0]
+        new_head = (self.body[0][0] + direction[0], self.body[0][1] + direction[1])
+        print(f"new head {new_head}")
+
+        if self.is_outside(* new_head):
+            print("is outside")
+            return False
+        #elif game.bricks.is_any(* new_head):
+        elif game.bricks.is_brickk(* new_head):
+            print("is brick")
+            return False
+        elif game.snakes.is_snake(* new_head):
+            print("is snake")
+            return False
+        return True
+
+    def reverse_snake(self):
+        self.body = self.body[::-1]
+
+    def maybe_turn(self):
+        if not random.randint(0,4):
+            #pass
+            random.shuffle(self.directions)
+
+    def check_if_has_eaten_snail(self):
+        if self.body[0][0] == game.snail.x and self.body[0][1] == game.snail.y:
+            game.over()
+
+
+    def move(self):
+        print(self.body)
+        if self.can_continue():
+            print("can_cont")
+            self.do_move()
+        elif self.can_do_any():
+            print("can_do_any")
+            self.do_move()
+        else:
+            print("reverse snake")
+            self.reverse_snake()
+
+        self.maybe_turn()
+        self.check_if_has_eaten_snail()
 
 
     def is_outside(self, x, y):
-        return x < 0 or y < 0 or x > game.max_x or y > game.max_y:
-        #if x < 0 or y < 0 or x > game.max_x or y > game.max_y:
-        #    return True
-        #return False
+        return x < 0 or y < 0 or x > game.max_x or y > game.max_y
 
     def is_snail(self,x ,y):
-        return game.snail.x == x and game.snail.y == y:
-        #if game.snail.x == x and game.snail.y == y:
-        #    return True
+        return game.snail.x == x and game.snail.y == y
 
 
     def draw(self):
@@ -197,8 +218,6 @@ class Snakes:
 
 
 class Brick:
-    #screen = 0
-
     def __init__(self,x,y,movable):
         self.x = x
         self.y = y
@@ -209,15 +228,10 @@ class Brick:
     def draw(self):
         snake_size = 10
         not_full = 0
-        #print(f"{(self.x, self.y)}")
         pygame.draw.circle(game.screen, self.color[self.movable] , (self.x * GRID_SLEN, self.y * GRID_SLEN), snake_size, not_full)
-
-    #def can_move(self, x, y): # ture if is not block, also handle snake and boarder?
-    #    return is_
 
 
 class Bricks:
-    #screen = 0
     def __init__(self):
         self.blist = []
 
@@ -225,10 +239,6 @@ class Bricks:
         for i, brick in enumerate(self.blist):
             print(i, brick.x, brick.y, brick.movable)
 
-    #def add_screen(self)
-    #    for b in self.blist:
-    #        b.sceen = self.screen
-    #
     def rm(self, x, y):
         for i, brick in enumerate(self.blist):
             if brick.x == x and brick.y == y:
@@ -236,8 +246,6 @@ class Bricks:
 
     def draw(self):
         for b in self.blist:
-            #if b.screen == 0:
-            #    b.screen = self.screen
             b.draw()
 
     def is_mobile(self, x, y):
@@ -252,20 +260,23 @@ class Bricks:
                 return True
         return False
 
+    # TODO
     # only one of these should be needed...
+    # yet this funtion seems broken
     def is_any(self, x, y):
         return not (self.is_mobile(x,y) or self.is_solid(x,y))
+        #return not ((self.is_mobile(x,y) or self.is_solid(x,y)))
 
     def is_brickk(self, x, y):
         print(f"testing if {x,y} is part of bricks")
         if self.is_mobile(x,y):
-            print("YES")
+            #print("YES is m brick")
             return True
         elif self.is_solid(x,y):
-            print("YES")
+            #print("YES is s brick")
             return True
         else:
-            print("no")
+            #print("no brick")
             return False
 
 
@@ -275,17 +286,15 @@ class Game:
         global bricks
         self.BG_COLOR = BG_COLOR
         pygame.init()
-        pygame.display.set_caption("dddddd")
+        #pygame.display.set_caption("dddddd")
         font = pygame.font.Font(None, 10)
-
         self.level_file = level_file
         self.bricks = Bricks()
-        #self.snail = Snail()
-        self.snakes = Snakes() # TODO
+        self.snakes = Snakes()
         self.max_x, self.max_y, self.snail = self.read_level_file(self.level_file)
         self.screen = pygame.display.set_mode( (GRID_SLEN * self.max_x, GRID_SLEN * self.max_y) )
-        self.snail.screen = self.screen
-        self.bricks.screen = self.screen
+        #self.snail.screen = self.screen
+        #self.bricks.screen = self.screen
 
 
     def over(self):
@@ -314,10 +323,9 @@ class Game:
             #self.screen.blit('222', textRect)
             game.snakes.move()
             self.draw()
-
             time.sleep(1/FPS)
 
-        
+
     def handle_input(self):
             key_press = pygame.event.get(KEYDOWN)
             if len(key_press) != 0:
@@ -330,13 +338,12 @@ class Game:
                 else:
                     print("unknown key")
                     print(key_press[0].key)
-            #pygame.event.clear()
+
 
     def read_level_file(self, level_file):
         with open(level_file, 'r') as f:
             lines = f.read().splitlines()
             max_len = max([len(i) for i in lines])
-
             len_x = max_len
             len_y = len(lines)
 
