@@ -106,8 +106,8 @@ class Snake():
         for part in self.body:
             count +=1
             if part == (x,y):
-                return count
-        return False
+                return True, count
+        return False, 0
 
 
     def do_move(self):
@@ -118,25 +118,22 @@ class Snake():
         self.body.insert(0,new_head)
 
     def can_do_any(self):
-        for direction in self.directions:
+        for i in range(4):
+            a = self.directions.pop(0)
+            self.directions.insert(4,a)
             if self.can_continue():
-                self.directions = direction + self.directions.remove(direction)
-                return
+                return True
+        return False
 
     def can_continue(self):
         direction = self.directions[0]
         new_head = (self.body[0][0] + direction[0], self.body[0][1] + direction[1])
-        print(f"new head {new_head}")
 
         if self.is_outside(* new_head):
-            print("is outside")
             return False
-        #elif game.bricks.is_any(* new_head):
         elif game.bricks.is_brickk(* new_head):
-            print("is brick")
             return False
         elif game.snakes.is_snake(* new_head):
-            print("is snake")
             return False
         return True
 
@@ -145,16 +142,13 @@ class Snake():
 
     def maybe_turn(self):
         if not random.randint(0,4):
-            #pass
             random.shuffle(self.directions)
 
     def check_if_has_eaten_snail(self):
         if self.body[0][0] == game.snail.x and self.body[0][1] == game.snail.y:
             game.over()
 
-
     def move(self):
-        print(self.body)
         if self.can_continue():
             print("can_cont")
             self.do_move()
@@ -195,14 +189,14 @@ class Snakes:
             snake.draw()
 
     def is_snake(self, x, y):
-        for i, snake in enumerate(self.slist):
-            if snake.is_on(x,y):
+        for snake in self.slist:
+            if snake.is_on(x,y)[0]:
                 return True
         return False
 
     def kill_or_cut(self,x ,y):
         for i, snake in enumerate(self.slist):
-            count = snake.is_on(x,y)
+            _, count = snake.is_on(x,y)
             if count == 1:
                 self.slist.pop(i)
                 if len(self.slist) == 0:
@@ -268,7 +262,7 @@ class Bricks:
         #return not ((self.is_mobile(x,y) or self.is_solid(x,y)))
 
     def is_brickk(self, x, y):
-        print(f"testing if {x,y} is part of bricks")
+        #print(f"testing if {x,y} is part of bricks")
         if self.is_mobile(x,y):
             #print("YES is m brick")
             return True
