@@ -150,10 +150,10 @@ class Snake():
 
     def move(self):
         if self.can_continue():
-            print("can_cont")
+            #print("can_cont")
             self.do_move()
         elif self.can_do_any():
-            print("can_do_any")
+            #print("can_do_any")
             self.do_move()
         else:
             print("reverse snake")
@@ -363,7 +363,7 @@ def main():
     global game
 
     if len(sys.argv) == 1:
-        level='level1.lvl'
+        level='level/level1.lvl'
     else:
         level = sys.argv[1]
 
